@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="icon" href="<%= BASE_URL %>favicon.ico">
+    <title></title>
+  </head>
+  <body>
+    <noscript>
+      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+    </noscript>
+    <div id="app"></div>
+    <script src="./art-template.js"></script>
+    <script src="./data.js"></script>
+    <script>
+      
+        var rule = template.defaults.rules[1];
+        rule.test = new RegExp(rule.test.source.replace('{{', '<\\\?').replace('}}', '\\\?>'));
+        var str= `
+        
+        <!-- 模块:<%= moduleName %> 功能:<%= className %> 作者: <%= authorName %> 日期: <%= createTime %> -->
+<template>
+    <audaque-detail-form-page
+        @submit-click="audaqueSubmitMixin"
+        :title="audaqutTitleMixin"
+        :opt-type="audaqueOptTypeMixin"
+    >
+        <audaque-form
+            :ref="audaqueFormRefMixin"
+            :model="audaqueFormInfoMixin"
+            :disabled="audaqueOptTypeMixin === audaqueFormTypeMixin.view"
+            :rules="audaqueFormRulesMixin"
+        >  <% for(var i=0;i<formItems.length;i++) { %>
+            <el-row><% for(var j=0;j<formItems[i].length;j++) { %>
+                <el-col :span="<%= formItems[i][j].isAllWidth?24:12 %>"> <% if(formItems[i][j].options){ %>
+                    <el-form-item label="<%= formItems[i][j].colCNName %>" prop="<%= formItems[i][j].colName %>">
+                        <el-select 
+                            v-model="audaqueFormInfoMixin<%= formItems[i][j].colName %>" 
+                            placeholder="<%= formItems[i][j].placeholder %>"
+                        >
+                            <el-option
+                                v-for="item in <%= formItems[i][j].options %>"
+                                :key="item.name"
+                                :label="item.name"
+                                :value="item.value"
+                            >
+                            </el-option>
+                        </el-select>
+                    </el-form-item> <% }else if( formItems[i][j].jsType==="date" ){ %>
+                        <el-form-item label="<%= formItems[i][j].colCNName %>" prop="<%= formItems[i][j].colName %>">
+                            <el-date-picker 
+                                format="yyyy-MM-dd HH:mm:ss" 
+                                value-format="yyyy-MM-dd HH:mm:ss"
+                                v-model.trim="audaqueFormInfoMixin<%= formItems[i][j].colName %>" 
+                                type="datetime" 
+                                placeholder="选择日期"
+                            >
+                            </el-date-picker>
+                        </el-form-item> <% }else if( formItems[i][j].jsType==="number" ){ %>
+                        <el-form-item label="<%= formItems[i][j].colCNName %>" prop="<%= formItems[i][j].colName %>">
+                            <el-input-number
+                                v-model.trim="audaqueFormInfoMixin<%= formItems[i][j].colName %>"
+                                :step="0.1"
+                                :precision="2"
+                                type="number"
+                                placeholder="<%= formItems[i][j].placeholder %>"
+                                :min="0.1"
+                                :max="100"
+                            ></el-input-number>
+                        </el-form-item> <% }else if( formItems[i][j].jsType==="string" && formItems[i][j].colLength>=400 ){ %>
+                        <el-form-item label="<%= formItems[i][j].colCNName %>" prop="<%= formItems[i][j].colName %>">
+                            <el-input
+                                v-model.trim="audaqueFormInfoMixin<%= formItems[i][j].colName %>"
+                                type="textarea"
+                                :maxlength="<%= formItems[i][j].colLength %>"
+                            ></el-input>
+                        </el-form-item><% }else{ %>
+                        <el-form-item label="<%= formItems[i][j].colCNName %>" prop="<%= formItems[i][j].colName %>">
+                            <el-input
+                                v-model.trim="audaqueFormInfoMixin<%= formItems[i][j].colName %>"
+                                type="text"
+                                :maxlength="<%= formItems[i][j].colLength %>"
+                            ></el-input>
+                        </el-form-item><% } %>
+                    </el-col><% } %>
+                </el-row><% } %>
+        </audaque-form>
+    </audaque-detail-form-page>
+</template>
+
+<script>
+import { create<%= ClassName %>, update<%= ClassName %>, read<%= ClassName %> } from '@/api/config/<%= className %>';
+
+import { audaqueConstantMixin, audaqueFormMixin, AudaqueElementValidator } from '@audaque/vue-utils';
+
+export default {
+    //详情接口 新增接口 修改接口
+    mixins: [audaqueFormMixin(read<%= ClassName %>, update<%= ClassName %>, create<%= ClassName %>), audaqueConstantMixin],
+
+    data() {
+        return {
+            //表单数据
+            audaqueFormInfoMixin: {<% for(var i=0;i<formItems.length;i++) { %>    <% for(var j=0;j<formItems[i].length;j++) { %>
+                <%= formItems[i][j].colName %>: '', // <%= formItems[i][j].colCNName %> <% } %>  <% } %>
+            },
+            //表单验证
+            audaqueFormRulesMixin: { <% for(var i=0;i<formItems.length;i++) { %>  <% for(var j=0;j<formItems[i].length;j++) { %>  <% if(formItems[i][j].rules.length>0){%>
+                <%= formItems[i][j].colName %>:[ <% for(let k=0;k<formItems[i][j].rules.length;k++) {%>
+                        AudaqueElementValidator.<%= formItems[i][j].rules[k]%>(/*默认参数*/) <% } %>
+                ], // <%= formItems[i][j].colCNName %>  <% } %>  <% } %>  <% } %>
+                
+            },<% for(var i in options) { %>
+            //枚举值
+            <%= i %>: [<% for(var j=0;j<options[i].length;j++){ %>
+                { name: "<%=options[i][j].name %>", value: "<%=options[i][j].value %>" },<% } %>
+            ], <% } %>
+        };
+    },
+
+    components: {},
+
+    watch: {},
+
+    computed: {},
+
+    created() {},
+
+    methods: {
+        /**
+         * 详情接口
+         */
+        // audaqueReadRequestFnMixin() {
+        //     return readExample(this.audaqueIdMixin);
+        // },
+        /**
+         * 新增接口
+         */
+        // audaqueAddRequestFnMixin() {
+        //     return createExample(this.audaqueFormInfoMixin);
+        // },
+        /**
+         * 修改接口
+         */
+        // audaqueUpdateRequestFnMixin() {
+        //     return updateExample(this.audaqueFormInfoMixin);
+        // }
+    },
+
+    beforeDestroy() {}
+};
+<\/script>
+<style lang="scss" scoped></style>
+
+
+            `;
+
+
+
+
+        var htmlstr = template.render( str, data);
+        console.log(htmlstr)
+    </script>
+    <!-- built files will be auto injected -->
+  </body>
+</html>
